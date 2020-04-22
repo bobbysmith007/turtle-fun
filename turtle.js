@@ -1,27 +1,24 @@
 // The turtle prototype will be cloned to create new turtles
 //
-var DEBUG = true;
+var DEBUG = false;
 var TurtleProto = {
   relativeControls: true,
   _isDrawing: false,
   _color: "#000",
-  thickness: 1,
-  x:0,
+  _thickness: 1,
+  _x:0,
   px:0,
   maxX:420,
-  y:0,
+  _y:0,
   py:0,
   maxY:350,
   _facing: 0,
   speed: 1,
   $elt: null,
-  currentLineStart: null,
+  currentLine: null,
   walking: false,
 
-  get isDrawing(){
-    return this._isDrawing;
-  },
-
+  get isDrawing(){ return this._isDrawing; },
   set isDrawing(state){
     if(DEBUG) console.log('Toggling isDrawing', state);
     this._isDrawing = state;
@@ -32,31 +29,48 @@ var TurtleProto = {
     }
   },
 
-  get facing (){
-    return this._facing;
-  },
-
+  get facing (){ return this._facing; },
   set facing(facing){
-    if(this._facing != facing){
-      this.prevFacing = this._facing;
-      this._facing = facing;
-      this._startNewLine();
-      this.render();
-    }
+    if(this._facing == facing) return;
+    this.prevFacing = this._facing;
+    this._facing = facing;
+    this._startNewLine();
+    this.render();
   },
 
-  get color (){
-    return this._color;
+  get x (){ return this._x; },
+  set x (nx){
+    if( this._x == nx ) return nx;
+    this.px = this._x;
+    this._x = nx;
+    this._checkX();
+    this.render();
   },
 
+  get y (){ return this._y; },
+  set y (ny){
+    if( this._y == ny ) return ny;
+    this.py = this._y;
+    this._y = ny;
+    this._checkY();
+    this.render();
+  },
+
+  get color (){ return this._color; },
   set color(color){
-    if(this._color != color){
-      this._color = color;
-      this.render();
-    }
+    if ( this._color == color ) return;
+    this._color = color;
+    this._startNewLine();
+    this.render();
   },
 
-  _constructor: function (){  },
+  get thickness (){ return this._thickness; },
+  set thickness(th){
+    if ( this._thickness == th )return;
+    this._thickness = th;
+    this._startNewLine();
+    this.render();
+  },
 
   clone: function(board){ // static function
     if(!board) board = window.document.querySelector('.board');
@@ -85,7 +99,7 @@ var TurtleProto = {
     return o;
   },
 
-  _checkX: function(){
+  _checkX: function(){ // Todo:better wrap handling
     if(this.x < 0){
       this.x = this.maxX;
       this._startNewLine();
@@ -96,7 +110,7 @@ var TurtleProto = {
     }
   },
 
-  _checkY: function(){
+  _checkY: function(){ // Todo:better wrap handling
     if(this.y < 0){
       this.y = this.maxY;
       this._startNewLine();
@@ -107,65 +121,42 @@ var TurtleProto = {
     }
   },
 
-
-
   left: function left( turns ){
     if(!turns) turns = 1;
     this.facing = 180;
-    this.px = this.x;
-    this.py = this.y;
     while (turns-- > 0) this.x -= this.speed;
-    this._checkX();
-    this.render();
     return this;
   },
 
   right: function right (turns){
     if(!turns) turns = 1;
     this.facing = 0;
-    this.px = this.x;
-    this.py = this.y;
     while (turns-- > 0) this.x += this.speed;
-    this._checkX();
-    this.render();
     return this;
   },
 
   up: function up(turns){
     if(!turns) turns = 1;
     this.facing = 270;
-    this.py = this.y;
-    this.px = this.x;
     while (turns-- > 0) this.y -= this.speed;
-    this._checkY();
-    this.render();
     return this;
   },
   down: function down(turns){
     if(!turns) turns = 1;
     this.facing = 90;
-    this.py = this.y;
-    this.px = this.x;
     while(turns-- > 0) this.y += this.speed;
-    this._checkY();
-    this.render();
     return this;
   },
 
-  forward: function(turns){
+  forward: function(turns){ // TODO: handle wrapping when more than 1 turn
     if(!turns) turns = 1;
     var f = this.facing;
-    var dist = turns*this.speed;
+    var dist = turns * this.speed;
     var dx = (Math.cos((2*Math.PI/360)*f)||0) * (dist);
     var dy = (Math.sin((2*Math.PI/360)*f)||0) * (dist);
     if(DEBUG) console.log('forward', dx, dy, dist, this.x, this.y, this.facing);
-    this.py = this.y;
-    this.px = this.x;
     this.x = this.x + dx;
     this.y = this.y + dy;
-    this._checkX();
-    this._checkY();
-    this.render();
     return this;
   },
 
@@ -173,11 +164,9 @@ var TurtleProto = {
     if(!turns) turns = 1;
     var f = this.facing;
     var bf = ((f+180) % 360);
-
     this.facing = bf;
-    forward(turns);
+    this.forward(turns);
     this.facing = f;
-    this.render();
     return this;
   },
 
@@ -186,7 +175,6 @@ var TurtleProto = {
     var f = this.facing;
     var rf = ((f + deg) % 360);
     this.facing = rf;
-    this.render();
     return this;
   },
 
@@ -196,7 +184,6 @@ var TurtleProto = {
     var lf = ((f - deg) % 360);
     while(lf < 0) lf+=360;
     this.facing = lf;
-    this.render();
     return this;
   },
 
