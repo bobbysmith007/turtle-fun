@@ -1,5 +1,6 @@
 // The turtle prototype will be cloned to create new turtles
 //
+var DEBUG = true;
 var TurtleProto = {
   relativeControls: true,
   _isDrawing: false,
@@ -22,9 +23,9 @@ var TurtleProto = {
   },
 
   set isDrawing(state){
+    if(DEBUG) console.log('Toggling isDrawing', state);
     this._isDrawing = state;
-    console.log('Toggling isDrawing', this._isDrawing);
-    if(this._isDrawing){
+    if(state){
       this._startNewLine();
     }else{
       this.currentLine = null;
@@ -55,12 +56,12 @@ var TurtleProto = {
     }
   },
 
-  _constructor: function (){ Object.assign(this, TurtleProto); },
+  _constructor: function (){  },
 
   clone: function(board){ // static function
     if(!board) board = window.document.querySelector('.board');
     if(!board){ return false; }
-    var o = new TurtleProto._constructor();
+    var o = Object.create(TurtleProto);
     o.$elt = document.createElement('div');
     var img = document.createElement('img');
     o.$elt.append(img);
@@ -157,7 +158,7 @@ var TurtleProto = {
     var dist = turns*this.speed;
     var dx = (Math.cos((2*Math.PI/360)*f)||0) * (dist);
     var dy = (Math.sin((2*Math.PI/360)*f)||0) * (dist);
-    console.log('forward', dx, dy, dist, this.x, this.y, this.facing);
+    if(DEBUG) console.log('forward', dx, dy, dist, this.x, this.y, this.facing);
     this.py = this.y;
     this.px = this.x;
     this.x = this.x + dx;
@@ -172,7 +173,7 @@ var TurtleProto = {
     if(!turns) turns = 1;
     var f = this.facing;
     var bf = ((f+180) % 360);
-    console.log('Facing:', f, bf);
+
     this.facing = bf;
     forward(turns);
     this.facing = f;
@@ -184,7 +185,6 @@ var TurtleProto = {
     if( !deg ) deg = 90;
     var f = this.facing;
     var rf = ((f + deg) % 360);
-    console.log('Facing:', f, rf);
     this.facing = rf;
     this.render();
     return this;
@@ -195,7 +195,6 @@ var TurtleProto = {
     var f = this.facing;
     var lf = ((f - deg) % 360);
     while(lf < 0) lf+=360;
-    console.log('Facing:', f, lf);
     this.facing = lf;
     this.render();
     return this;
@@ -203,9 +202,9 @@ var TurtleProto = {
 
   _startNewLine: function(x, y){
     if(!this.isDrawing) return false;
-    console.log('Starting new line', x, y);
     if( x == null ) x = this.x;
     if( y == null ) y = this.y;
+    if(DEBUG) console.log('Starting new line', x, y);
     var l = this.currentLine = {
       sx:x,
       sy:y,
@@ -213,7 +212,7 @@ var TurtleProto = {
       ey:y,
       height:1,
       width:0,
-      rot: 0,
+      rot: this.facing,
       thickness: this.thickness,
       $elt: document.createElement('div'),
 
@@ -232,16 +231,15 @@ var TurtleProto = {
     if(!x) x = this.x;
     if(!y) y = this.y;
     var l = this.currentLine;
-    //console.log(l, x, y, this.px, this.py);
-    var y2 = l.sy, y1 = l.ey;
-    l.sy = Math.min(y1, y2, y);
-    l.ey = Math.max(y1, y2, y);
+    console.log(l, x, y, this.px, this.py);
 
-    var x2 = l.sx, x1 = l.ex;
-    l.sx = Math.min(x1, x2, x);
-    l.ex = Math.max(x1, x2, x);
+    l.ey = y;
+    l.ex = x;
 
-    l.distance = (ey - sy) / (ex - sx);
+
+    var dist = l.distance = Math.sqrt(Math.pow((l.ey - l.sy),2) + Math.pow( (l.ex - l.sx),2));
+    var dx = (Math.cos((2*Math.PI/360) * l.rot)||0) * (dist);
+    var dy = (Math.sin((2*Math.PI/360) * l.rot)||0) * (dist);
     l.height = l.thickness;
     l.width = l.distance;
     l.$elt.style.left = l.sx;
@@ -282,7 +280,7 @@ var KeyHandler = {
     // make keys standard across apis (ArrowUp -> Up)
     var key = event.code.replace('Arrow','');
     var fn = KeyHandler.keyHandlers[key];
-    console.log('keypress', key, fn);
+    if(DEBUG) console.log('keypress', key, fn);
     if(fn){
       fn(o);
       event.preventDefault();
