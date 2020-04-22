@@ -154,14 +154,16 @@ var TurtleProto = {
   forward: function(turns){
     if(!turns) turns = 1;
     var f = this.facing;
-    var mv = this[f];
-    var dx = (Math.cos((2*Math.PI/360)*f)||0) * (turns*this.speed);
-    var dy = (Math.sin((2*Math.PI/360)*f)||0) * (turns*this.speed);
+    var dist = turns*this.speed;
+    var dx = (Math.cos((2*Math.PI/360)*f)||0) * (dist);
+    var dy = (Math.sin((2*Math.PI/360)*f)||0) * (dist);
+    console.log('forward', dx, dy, dist, this.x, this.y, this.facing);
     this.py = this.y;
     this.px = this.x;
     this.x = this.x + dx;
-    this.y = this.y + dx;
-    if(mv) while(turns-- > 0) mv.call(this);
+    this.y = this.y + dy;
+    this._checkX();
+    this._checkY();
     this.render();
     return this;
   },
@@ -169,11 +171,10 @@ var TurtleProto = {
   backward: function(turns){
     if(!turns) turns = 1;
     var f = this.facing;
-
     var bf = ((f+180) % 360);
     console.log('Facing:', f, bf);
-    var mv = this[bf];
-    if(mv) while(turns-- > 0) mv.call(this);
+    this.facing = bf;
+    forward(turns);
     this.facing = f;
     this.render();
     return this;
@@ -210,11 +211,14 @@ var TurtleProto = {
       sy:y,
       ex:x,
       ey:y,
-      height:0,
+      height:1,
       width:0,
+      rot: 0,
       thickness: this.thickness,
       $elt: document.createElement('div'),
+
     };
+    l.$elt.style.transform = 'rotate('+this.facing+'deg)';
     l.$elt.className = 'line';
     l.$elt.style.top = y+'px';
     l.$elt.style.left = x+'px';
@@ -229,18 +233,17 @@ var TurtleProto = {
     if(!y) y = this.y;
     var l = this.currentLine;
     //console.log(l, x, y, this.px, this.py);
-    if (l.sx == x) {
-      var y2 = l.sy, y1 = l.ey;
-      l.sy = Math.min(y2, y);
-      l.ey = Math.max(y1, y);
-    }
-    else if(l.sy == y){
-      var x2 = l.sx, x1 = l.ex;
-      l.sx = Math.min(x2, x);
-      l.ex = Math.max(x1, x);
-    }
-    l.height = (l.ey - l.sy) + l.thickness;
-    l.width = (l.ex - l.sx) + l.thickness;
+    var y2 = l.sy, y1 = l.ey;
+    l.sy = Math.min(y1, y2, y);
+    l.ey = Math.max(y1, y2, y);
+
+    var x2 = l.sx, x1 = l.ex;
+    l.sx = Math.min(x1, x2, x);
+    l.ex = Math.max(x1, x2, x);
+
+    l.distance = (ey - sy) / (ex - sx);
+    l.height = l.thickness;
+    l.width = l.distance;
     l.$elt.style.left = l.sx;
     l.$elt.style.top = l.sy;
     l.$elt.style.width = l.width+'px';
