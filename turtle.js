@@ -1,6 +1,6 @@
 // The turtle prototype will be cloned to create new turtles
 //
-var DEBUG = false;
+var DEBUG = true;
 var TurtleProto = {
   relativeControls: true,
   _isDrawing: false,
@@ -306,7 +306,8 @@ var KeyHandler = {
     Down:   function(o){ o.relativeControls ? o.backward() : o.down();},
     Space:  function(o){ o.isDrawing = !o.isDrawing; },
     H:      function(o) { o.hilbrantWalk(); },
-    s:      function(o) { o.stopWalk(); },
+    'Equal':      function(o) { o.thickness = o.thickness++;  },
+    'Minus':      function(o) { o.thickness = Math.max(1,o.thickness-1); },
     Escape: function(o){
       var it;
       while(  (it = document.querySelector('.line')) ){
