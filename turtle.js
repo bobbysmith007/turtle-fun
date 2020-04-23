@@ -305,7 +305,7 @@ var KeyHandler = {
     Up:     function(o){ o.relativeControls ? o.forward() : o.up(); },
     Down:   function(o){ o.relativeControls ? o.backward() : o.down();},
     Space:  function(o){ o.isDrawing = !o.isDrawing; },
-    h:      function(o) { hilbertWalker(o, 5); },
+    KeyH:      function(o) { hilbertWalker(o, 5); },
     'Equal':      function(o) { o.thickness = o.thickness++;  },
     'Minus':      function(o) { o.thickness = Math.max(1,o.thickness-1); },
     Escape: function(o){
