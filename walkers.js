@@ -98,12 +98,12 @@ function plantWalkTurtle(turtle, steps, x, y, facing){
   turtle.x = x || turtle.maxX/2;
   turtle.y = y || 400;
   turtle.facing = facing || 310;
-  LSystemWalker(turtle, Object.create(fractalPlantWalkerProto), steps);
+  return LSystemWalker(turtle, Object.create(fractalPlantWalkerProto), steps);
 };
 
-function hilberWalker(turtle, steps, x, y, facing){
+function hilbertWalker(turtle, steps, x, y, facing){
   turtle.x = x || turtle.maxX/4;
   turtle.y = y || turtle.maxY/4;
   turtle.facing = facing || 0;
-  LSystemWalker(turtle, Object.create(hilbertLProto), steps);
+  return LSystemWalker(turtle, Object.create(hilbertLProto), steps);
 }
