@@ -17,6 +17,7 @@ var TurtleProto = {
   $elt: null,
   currentLine: null,
   walking: false,
+  stateStack: [],
 
   get isDrawing(){ return this._isDrawing; },
   set isDrawing(state){
@@ -72,6 +73,30 @@ var TurtleProto = {
     this.render();
   },
 
+  save: function(){
+    this.stateStack.push({
+      x : this.x,
+      y : this.y,
+      color : this.color,
+      facing : this.facing,
+      thickness: this.thickness,
+      isDrawing: this.isDrawing,
+    });
+    this._startNewLine();
+  },
+
+  restore: function(){
+    var s = this.stateStack.pop();
+    if(!s) return;
+    this.x = s.x;
+    this.y = s.y;
+    this.facing = s.facing;
+    this.color = s.color;
+    this.thickness = s.thickness;
+    this.isDrawing = s.isDrawing;
+    this._startNewLine();
+  },
+
   clone: function(board){ // static function
     if(!board) board = window.document.querySelector('.board');
     if(!board){ return false; }
@@ -90,8 +115,8 @@ var TurtleProto = {
     o.$elt.style.position = "absolute";
     o.$elt.style.left = this.x;
     o.$elt.style.top = this.y;
-    o.height = o.$elt.style.height = 32;
-    o.width = o.$elt.style.width = 32;
+    o.height = o.$elt.style.height = 24;
+    o.width = o.$elt.style.width = 24;
     o.$board = board;
     o.$board.prepend(o.$elt);
     o.maxX = o.$board.clientWidth;
@@ -99,7 +124,7 @@ var TurtleProto = {
     return o;
   },
 
-  _checkX: function(){ // Todo:better wrap handling
+  _checkX: function(){ // Todo:better / optional wrap handling
     if(this.x < 0){
       this.x = this.maxX;
       this._startNewLine();
@@ -159,6 +184,15 @@ var TurtleProto = {
     this.y = this.y + dy;
     return this;
   },
+
+  forwardDraw: function(turns){ // TODO: handle wrapping when more than 1 turn
+    var d = this.isDrawing;
+    this.isDrawing = true;
+    this.forward(turns);
+    this.isDrawing = d;
+    return this;
+  },
+
 
   backward: function(turns){
     if(!turns) turns = 1;
@@ -243,22 +277,13 @@ var TurtleProto = {
     this.$elt.className = 'turtle '+this.facing;
 
 
-    var hw =this.width/2, hh=this.height/2;
+    var hw = this.width/2, hh=this.height/2;
     var xnudge = (Math.cos((2*Math.PI/360)*this.facing)||0) * hw;
     var ynudge = (Math.sin((2*Math.PI/360)*this.facing)||0) * hh;
     this.$elt.style.left = (this.x + xnudge - hw) + 'px';
     this.$elt.style.top =  (this.y + ynudge - hh) + 'px';
     this._renderLine();
   },
-
-  stopWalk: function stopWalk(){
-    this.walking = false;
-  },
-
-  spiralWalk: function spiralWalk(){
-    this.left();
-  },
-
 
 };
 
@@ -275,13 +300,13 @@ var KeyHandler = {
     }
   },
   keyHandlers: {
-    Left:  function(o){ o.relativeControls ? o.turnLeft(1) : o.left() ; },
-    Right: function(o){ o.relativeControls ? o.turnRight(1) : o.right(); },
-    Up:    function(o){ o.relativeControls ? o.forward() : o.up(); },
-    Down:  function(o){ o.relativeControls ? o.backward() : o.down();},
-    Space: function(o){ o.isDrawing = !o.isDrawing; },
-    H: function(o) { o.hilbrantWalk(); },
-    s: function(o) { o.stopWalk(); },
+    Left:   function(o){ o.relativeControls ? o.turnLeft(1) : o.left() ; },
+    Right:  function(o){ o.relativeControls ? o.turnRight(1) : o.right(); },
+    Up:     function(o){ o.relativeControls ? o.forward() : o.up(); },
+    Down:   function(o){ o.relativeControls ? o.backward() : o.down();},
+    Space:  function(o){ o.isDrawing = !o.isDrawing; },
+    H:      function(o) { o.hilbrantWalk(); },
+    s:      function(o) { o.stopWalk(); },
     Escape: function(o){
       var it;
       while(  (it = document.querySelector('.line')) ){
@@ -291,9 +316,13 @@ var KeyHandler = {
   },
 };
 
+
+
+
 // onEvent('screen1', "keydown", function(event){ turtle.keyPressHandler(event); });
 window.onload = function(){
   var turtle = window.turtle = TurtleProto.clone();
+
   window.document.body.addEventListener("keydown", function(event){
     KeyHandler.press(turtle, event);
   });
